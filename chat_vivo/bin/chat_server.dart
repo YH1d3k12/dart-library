@@ -1,28 +1,31 @@
 import 'dart:io';
+import 'dart:convert';
 
 void main() async {
   final server = await ServerSocket.bind('127.0.0.1', 4040);
-  print("Servidor rodando em ${server.address.address}:${server.port}");
+  print("Servidor rodando em 127.0.0.1:4040");
 
   List<Socket> clients = [];
 
   server.listen((client) {
-    print("Cliente conectado: ${client.remoteAddress.address}");
+    print("Novo cliente conectado");
     clients.add(client);
 
-    client.listen((data) {
-      String message = String.fromCharCodes(data).trim();
+    client
+        .cast<List<int>>()
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .listen((message) {
 
-      print("Mensagem recebida: $message");
+      print(message);
 
       for (var c in clients) {
-        c.write("$message\n");
+        c.writeln(message);
       }
-    });
 
-    client.done.then((_) {
+    }, onDone: () {
       clients.remove(client);
-      print("Cliente desconectado.");
+      print("Cliente desconectado");
     });
   });
 }
